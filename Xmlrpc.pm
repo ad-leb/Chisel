@@ -1,8 +1,8 @@
-package Xmlrpc;
+package TwentyFive::Xmlrpc;
 use IO::Socket qw(AF_INET SOCK_STREAM);
 use IO::Socket::SSL;
 use Carp qw(carp croak);
-use Xml;
+use TwentyFive::Xml;
 
 
 
