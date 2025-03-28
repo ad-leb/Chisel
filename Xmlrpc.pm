@@ -74,7 +74,7 @@ sub post
 
 
 
-	$content = Xml->pretty($content, 'methodCall') if $content;
+	$content = TwentyFive::Xml->pretty($content, 'methodCall') if $content;
 	$this->{req}{content_length} = ($content) ? length $content : 0;
 
 	
