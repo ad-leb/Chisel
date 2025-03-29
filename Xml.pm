@@ -1,4 +1,4 @@
-package TwentyFive::Xml;
+package Chisel::Xml;
 
 
 

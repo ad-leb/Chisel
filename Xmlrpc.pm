@@ -1,8 +1,8 @@
-package TwentyFive::Xmlrpc;
+package Chisel::Xmlrpc;
 use IO::Socket qw(AF_INET SOCK_STREAM);
 use IO::Socket::SSL;
 use Carp qw(carp croak);
-use TwentyFive::Xml;
+use Chisel::Xml;
 
 
 
@@ -75,7 +75,7 @@ sub post
 
 
 
-	$content = TwentyFive::Xml->pretty($content, $this->{format}->%*) if $content;
+	$content = Chisel::Xml->pretty($content, $this->{format}->%*) if $content;
 	$this->{req}{content_length} = ($content) ? length $content : 0;
 
 	
@@ -124,7 +124,7 @@ sub response
 		$res->{content} .= <$fd> while length $res->{content} < $res->{content_length};
 	}
 
-	$res->{xmlobj} = TwentyFive::Xml->read($res->{content}, $this->{format}->%*);
+	$res->{xmlobj} = Chisel::Xml->read($res->{content}, $this->{format}->%*);
 
 
 
