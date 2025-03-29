@@ -8,12 +8,12 @@ use TwentyFive::Xml;
 
 
 
-our $def = {
+our $default = {
 	port						=> 80,
 	req							=>
 		{
 			content_type		=> 'text/xml',
-			user_agent			=> 'test-xmlrpc-alebedev',
+			user_agent			=> 'perl-xmlrpc',
 		},
 };
 
@@ -33,8 +33,8 @@ sub new
 	my ($self, $resource, %add) = @_;
 	my $session;
 
-	($session->{host}, $session->{port}) = split ':', $resource; 		$session->{port} = $def->{port} if !$session->{port};
-	$session->{req} = clone($def->{req});
+	$session = clone($default);
+	($session->{host}, $session->{port}) = split ':', $resource; 		$session->{port} = $default->{port} if !$session->{port};
 	map { $session->{$_} = $add{$_} } keys %add;
 
 
@@ -69,17 +69,17 @@ sub new
 
 sub post
 {
-	my ($this, $source, $name, $content) = @_;					
+	my ($this, $content) = @_;					
 	my $fd = $this->{sock};
 	my $str = '';
 
 
 
-	$content = TwentyFive::Xml->pretty($content, $name) if $content;
+	$content = TwentyFive::Xml->pretty($content, $this->{format}->%*) if $content;
 	$this->{req}{content_length} = ($content) ? length $content : 0;
 
 	
-	$str .= qq(POST $source HTTP/1.1\r\n);
+	$str .= qq(POST $this->{source} HTTP/1.1\r\n);
 	$str .= qq(Host: $this->{host}\r\n);
 	$str .= join '', 
 		map { 
@@ -124,7 +124,7 @@ sub response
 		$res->{content} .= <$fd> while length $res->{content} < $res->{content_length};
 	}
 
-	$res->{xmlobj} = TwentyFive::Xml->read($res->{content}, $this->{array_list});
+	$res->{xmlobj} = TwentyFive::Xml->read($res->{content}, $this->{format}->%*);
 
 
 
@@ -179,6 +179,9 @@ sub dec_http_header
 
 	return ($key, $value);
 }
+
+
+
 sub clone
 {
 	my ($obj) = @_;
@@ -196,6 +199,18 @@ sub clone
 
 	return $tadpole;
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

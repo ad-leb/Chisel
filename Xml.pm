@@ -4,10 +4,12 @@ package TwentyFive::Xml;
 
 
 
-our %const = (
+our %default = (
 	tab							=> '  ',
 	break						=> "\n",
+	name						=> 'object',
 );
+our $format;
 
 
 
@@ -19,16 +21,21 @@ our %const = (
 
 sub AUTOLOAD
 {
-	my ($self, $obj, $name) = @_;			$name = 'object' if !$name;
-	my ($method) = ($AUTOLOAD =~ /::(.*)/);
+	my ($self, $obj, %add) = @_;
+	my ($method) = ($AUTOLOAD =~ /.*::(.*)$/);
 	my $str = '<?xml version="1.0" encoding="UTF-8"?>';
 
 
+	$format = clone(\%default);
+	map { $format->{$_} = $add{$_} } keys %add;
+
 	if ($method eq 'pretty') {
-		$str .= "\n" . enc_pretty($obj, $name, 0);
+		$str .= "\n" . enc_pretty($obj, $format->{name}, 0);
 	} else {
-		$str .= enc($obj, $name);
+		$str .= enc($obj, $format->{name});
 	}
+
+	$format = undef;
 
 
 	return $str;
@@ -54,7 +61,8 @@ sub enc
 
 	$str .= "<$name>";
 	if ( ref $obj eq 'ARRAY' ) {
-		map { $str .= enc($obj->[$_], "item_$_") } 0..$#$obj;
+		my $key = $format->{array}{$name};		$key = 'item' if !$key;
+		map { $str .= enc($obj->[$_], "$key") } 0..$#$obj;
 	} elsif ( ref $obj eq 'HASH' ) {
 		map { $str .= enc($obj->{$_}, $_) } keys $obj->%*;
 	} else {
@@ -71,7 +79,7 @@ sub enc
 sub enc_pretty
 {
 	my ($obj, $name, $deep) = @_;
-	my ($preffix, $terminator) = ($const{tab} x $deep, $const{break});
+	my ($preffix, $terminator) = ($format->{tab} x $deep, $format->{break});
 	my $str = '';
 
 
@@ -80,7 +88,8 @@ sub enc_pretty
 	$str .= $preffix . "<$name>";
 	if ( ref $obj eq 'ARRAY' ) {
 		$str .= $terminator;
-		map { $str .= enc_pretty($obj->[$_], "item_$_", $deep + 1) } 0..$#$obj;
+		my $key = $format->{array}{$name};		$key = 'item' if !$key;
+		map { $str .= enc_pretty($obj->[$_], "$key", $deep + 1) } 0..$#$obj;
 		$str .= $preffix;
 	} elsif ( ref $obj eq 'HASH' ) {
 		$str .= $terminator;
@@ -107,13 +116,18 @@ sub enc_pretty
 
 sub read
 {
-    my ($self, $str, $arr_list) = @_;
+    my ($self, $str, %add) = @_;
     my $obj;
 
 
+	$format->{array} = $arr_list;
+	map { $format->{$_} = $add{$_} } keys %add;
+
     $str =~ s/<\?xml.*\?>//;
 	$str = ch_dec($str);
-	($obj, $str) = dec($str, $arr_list);
+	($obj, $str) = dec($str);
+
+	$format = undef;
 
 
     return $obj;
@@ -122,7 +136,7 @@ sub read
 
 sub dec
 {
-	my ($str, $list, $arr) = @_;
+	my ($str, $arr) = @_;
 	my $obj;
 
 
@@ -132,7 +146,7 @@ sub dec
 
 		($tag, $str) = pull_tag($str);
 		if ( $tag->{type} eq 'open' ) {
-			($tmp, $str) = dec($str, $list, grep /^$tag->{word}$/, $list->@*);
+			($tmp, $str) = dec($str, grep /^$tag->{word}$/, keys $format->{array}->%*);
 			$arr
 				&& (push $obj->@*, $tmp)
 				|| ($obj->{$tag->{word}} = $tmp)
@@ -216,6 +230,30 @@ sub ch_dec
 
 
 
+
+
+
+
+
+
+
+sub clone
+{
+	my ($obj) = @_;
+	my $tadpole;
+
+
+	if ( ref $obj eq 'ARRAY' ) {
+		push $tadpole->@*, map { clone($_) } $obj->@*;
+	} elsif ( ref $obj eq 'HASH' ) {
+		map { $tadpole->{$_} = clone($obj->{$_}) } keys $obj->%*;
+	} else {
+		$tadpole = $obj;
+	}
+
+
+	return $tadpole;
+}
 
 
 
