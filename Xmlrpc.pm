@@ -30,11 +30,12 @@ our $def = {
 
 sub new
 {
-	my ($self, $resource) = @_;
+	my ($self, $resource, %add) = @_;
 	my $session;
 
 	($session->{host}, $session->{port}) = split ':', $resource; 		$session->{port} = $def->{port} if !$session->{port};
 	$session->{req} = clone($def->{req});
+	map { $session->{$_} = $add{$_} } keys %add;
 
 
 
@@ -68,13 +69,13 @@ sub new
 
 sub post
 {
-	my ($this, $source, $content) = @_;					
+	my ($this, $source, $name, $content) = @_;					
 	my $fd = $this->{sock};
 	my $str = '';
 
 
 
-	$content = TwentyFive::Xml->pretty($content, 'methodCall') if $content;
+	$content = TwentyFive::Xml->pretty($content, $name) if $content;
 	$this->{req}{content_length} = ($content) ? length $content : 0;
 
 	
@@ -122,6 +123,8 @@ sub response
 	if ( $res->{content_length} ) {
 		$res->{content} .= <$fd> while length $res->{content} < $res->{content_length};
 	}
+
+	$res->{xmlobj} = TwentyFive::Xml->read($res->{content}, $this->{array_list});
 
 
 
