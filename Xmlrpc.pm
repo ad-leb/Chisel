@@ -119,7 +119,9 @@ sub response
 		$res->{$key} = $value;
 	}
 
-	$res->{content} .= <$fd> while length $res->{content} < $res->{content_length};
+	if ( $res->{content_length} ) {
+		$res->{content} .= <$fd> while length $res->{content} < $res->{content_length};
+	}
 
 
 
