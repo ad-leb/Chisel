@@ -10,6 +10,7 @@ our %default = (
 	name						=> 'object',
 );
 our $format;
+our $pretty;
 
 
 
@@ -19,17 +20,40 @@ our $format;
 
 
 
-sub AUTOLOAD
+
+sub import
 {
-	my ($self, $obj, %add) = @_;
-	my ($method) = ($AUTOLOAD =~ /.*::(.*)$/);
+	no strict 'refs';
+	my ($package, $filename, $line) = caller;
+
+	$pretty++ if grep /^pretty$/, @_;
+
+	*{$package . "::$_"} = \&$_ foreach qw(to_xml from_xml);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sub to_xml
+{
+	my ($obj, %add) = @_;
 	my $str = '<?xml version="1.0" encoding="UTF-8"?>';
 
 
 	$format = clone(\%default);
 	map { $format->{$_} = $add{$_} } keys %add;
 
-	if ($method eq 'pretty') {
+	if ($pretty) {
 		$str .= "\n" . enc_pretty($obj, $format->{name}, 0);
 	} else {
 		$str .= enc($obj, $format->{name});
@@ -40,6 +64,30 @@ sub AUTOLOAD
 
 	return $str;
 }
+
+
+sub from_xml
+{
+    my ($str, %add) = @_;
+    my $obj;
+
+
+	$format->{array} = $arr_list;
+	map { $format->{$_} = $add{$_} } keys %add;
+
+    $str =~ s/<\?xml.*\?>//;
+	$str = ch_dec($str);
+	($obj, $str) = dec($str);
+
+	$format = undef;
+
+
+    return $obj;
+}
+
+
+
+
 
 
 
@@ -106,34 +154,6 @@ sub enc_pretty
 
 
 
-
-
-
-
-
-
-
-
-sub read
-{
-    my ($self, $str, %add) = @_;
-    my $obj;
-
-
-	$format->{array} = $arr_list;
-	map { $format->{$_} = $add{$_} } keys %add;
-
-    $str =~ s/<\?xml.*\?>//;
-	$str = ch_dec($str);
-	($obj, $str) = dec($str);
-
-	$format = undef;
-
-
-    return $obj;
-}
-
-
 sub dec
 {
 	my ($str, $arr) = @_;
@@ -163,6 +183,20 @@ sub dec
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 sub pull_tag
 {
 	my ($str) = @_;
@@ -185,19 +219,6 @@ sub pull_tag
 
 	return $tag, $str;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

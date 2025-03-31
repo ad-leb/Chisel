@@ -75,7 +75,7 @@ sub post
 
 
 
-	$content = Chisel::Xml->pretty($content, $this->{format}->%*) if $content;
+	$content = to_xml($content, $this->{format}->%*) if $content;
 	$this->{req}{content_length} = ($content) ? length $content : 0;
 
 	
@@ -124,7 +124,7 @@ sub response
 		$res->{content} .= <$fd> while length $res->{content} < $res->{content_length};
 	}
 
-	$res->{xmlobj} = Chisel::Xml->read($res->{content}, $this->{format}->%*);
+	$res->{xmlobj} = from_xml($res->{content}, $this->{format}->%*);
 
 
 
