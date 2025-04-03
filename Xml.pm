@@ -168,8 +168,8 @@ sub dec
 		if ( $tag->{type} eq 'open' ) {
 			($tmp, $str) = dec($str, grep /^$tag->{word}$/, keys $format->{array}->%*);
 			$arr
-				&& (push $obj->@*, $tmp)
-				|| ($obj->{$tag->{word}} = $tmp)
+				and push $obj->@*, $tmp
+				or $obj->{$tag->{word}} = $tmp
 			;
 		} elsif ( $tag->{type} eq 'close' ) {
 			last;
@@ -205,13 +205,13 @@ sub pull_tag
 
 	$str =~ s/(^\s*|\s*$)//sg;
 	$str =~ /^</s
-		&& ($tag->{type} = 'open')
-		&& ($str =~ s/^<(.*?)>/$1\0/s)
-		|| ($str =~ s/^(.*?)\s*</$1\0</s)
+		and $tag->{type} = 'open'
+		and $str =~ s/^<(.*?)>/$1\0/s
+		or $str =~ s/^(.*?)\s*</$1\0</s
 	;
 	$str =~ /^\//s
-		&& ($tag->{type} = 'close')
-		&& ($str =~ s/^\///s)
+		and $tag->{type} = 'close'
+		and $str =~ s/^\///s
 	;
 	($tag->{word}) = $str =~ /^(.*?)\0/s;
 	$str =~ s/^(.*?)\0//sg;
